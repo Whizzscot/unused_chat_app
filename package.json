@@ -1,0 +1,39 @@
+{
+  "name": "chat_app",
+  "version": "1.0.0",
+  "description": "Online chat app",
+  "main": "index.js",
+  "scripts": {
+    "test": "node ./test.js",
+    "start": "node ./index.js",
+    "devstart": "nodemon ./index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Whizzscot/chat_app.git"
+  },
+  "keywords": [
+    "online",
+    "chat",
+    "web",
+    "app"
+  ],
+  "author": "Elliot Mcleish",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Whizzscot/chat_app/issues"
+  },
+  "homepage": "https://github.com/Whizzscot/chat_app#readme",
+  "dependencies": {
+    "cookie-parser": "^1.4.6",
+    "express": "^4.17.1",
+    "nodemailer": "^6.7.1",
+    "serve-favicon": "^2.5.0",
+    "snowflake-sdk": "^1.6.5",
+    "socket.io": "^4.4.0",
+    "socket.io-cookie-parser": "^1.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.15"
+  }
+}
