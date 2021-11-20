@@ -82,5 +82,8 @@ const io = socket(server)
 ;
 
 io.on('connection',socket=>{
-
+    socket.on("message", message=>{
+        message.sent = message.sent || Date.now();
+        console.log(`New Message!\nSent by ${socket.id} at ${message.sent}.\nContent: "${message.content}"`);
+    });
 })

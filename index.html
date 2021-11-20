@@ -4,16 +4,127 @@
         <title>Online Chat App</title>
         <meta charset="utf-8">
         <style>
+            
+            #messagebar{
+                border:1px solid black;
+                border-radius: 1.4em;
+                position:relative;
+                width:90%;
+                display:flex;
+                flex-direction: row;
+                align-items: center;
+                justify-content: center;
+                padding-top:0.1em;
+                padding-bottom:0.1em;
+                font-size: inherit;
+            }
+
+            #message{
+                resize: none;
+                line-height:1.2em;
+                min-height:1.2em;
+                height:1.2em;
+                max-height: calc((1.2em * 4) + 0.9em + 2px);
+                width:calc(100% - 5em);
+                background-color: rgba(0,0,0,0);
+                padding:0.9em;
+                padding-left:0px;
+                outline:none;
+                border:none;
+                font-size: inherit;
+                cursor:auto;
+            }
+
+            /* width */
+            ::-webkit-scrollbar {
+            width: 10px;
+            }
+
+            /* Track */
+            ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            }
+
+            /* Handle */
+            ::-webkit-scrollbar-thumb {
+            background: #888;
+            }
+
+            /* Handle on hover */
+            ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+            }
+
+            @media(pointer:coarse){
+                body{
+                    font-size:1cm;
+                }
+
+                #messagebar{
+                    border-radius: 1.6em;
+                }
+            }
 
         </style>
         <script src="socket.io/socket.io.min.js"></script>
         <script>
+            function getCookie(name){
+                let cookies = document.cookie.split("; ")
+                for(let c = 0; c < cookies.length; ++c){
+                    let CNV = cookies[c].split("=");
+                    if(CNV[0]===name) return CNV[1];
+                }
+            };
+
+            function setCookie(cname, cvalue, exdays) {
+                const d = new Date();
+                d.setTime(d.getTime() + (exdays*24*60*60*1000));
+                let expires = "expires="+ d.toUTCString();
+                document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+            };
+
             const socket = io({
-                auth:{token:""}
-            })
+                auth:{token: getCookie("token")||""}
+            });
+
+            function sendMessage(content){
+                socket.emit("message",{
+                    content,
+                    sent:Date.now(),
+                })
+            };
         </script>
     </head>
     <body>
         <h1>Main Page</h1>
+        <div id="messagebar">
+            <textarea id="message" placeholder="Type Message Here..."></textarea>
+        </div>
+        <script>
+            const MessageEl = document.getElementById("message");
+
+            function updateHeight(){
+                MessageEl.style.height = "0px";
+                let styleData = window.getComputedStyle(MessageEl,null);
+                let lineHeight = parseFloat(styleData.getPropertyValue('line-height').slice(0,-2));
+                let padding = 
+                    parseFloat(styleData.getPropertyValue('padding-top').slice(0,-2)) +
+                    parseFloat(styleData.getPropertyValue('padding-bottom').slice(0,-2));
+                ;
+                MessageEl.style.height = (MessageEl.scrollHeight-padding+1)+"px";
+            }
+
+            MessageEl.addEventListener("keydown",e=>{
+                if(e.key != "Enter" || e.shiftKey) return;
+                e.preventDefault();
+                e.stopPropagation();
+                if(MessageEl.value) sendMessage(MessageEl.value);
+                MessageEl.value = "";
+                updateHeight();
+                return false;
+            });
+
+            MessageEl.addEventListener("input", updateHeight);
+        </script>
     </body>
 </html>
