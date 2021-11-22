@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Log In</title>
+        <meta charset='utf-8'>
+        <link rel="stylesheet" href="/form.css">
+        <script>
+            const ErrorMsg = new URLSearchParams(window.location.search).get("errmsg");
+        </script>
+    </head>
+    <body>
+        <form action="/login" method="post">
+            <h1>Log In</h1>
+            <div class="row">
+                <label for="email">E-Mail: </label>
+                <input required type="email" name="email" id="email">
+            </div>
+            <div class="row">
+                <label for="password">Password: </label>
+                <input required type="password" name="password" id="password">
+            </div>
+            <div class="row">
+                <input type="submit" id="submit" value="Log In">
+                <p id="errortext"></p>
+                <a href="/forgotpassword">Forgot Password?</a>
+            </div>
+            <p>Don't have an Account? <a href="/signup">Create One!</a></p>
+        </form>
+        <script>
+            if(ErrorMsg) document.getElementById("errortext").innerText = decodeURIComponent(ErrorMsg);
+        </script>
+    </body>
+</html>

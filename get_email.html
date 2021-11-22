@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Password Reset</title>
+        <meta charset='utf-8'>
+        <link rel="stylesheet" href="/form.css">
+        <script>
+            const ErrorMsg = new URLSearchParams(window.location.search).get("errmsg");
+        </script>
+    </head>
+    <body>
+        <form action="/forgotpassword" method="post">
+            <h1>Please enter your Email Address</h1>
+            <div class="row">
+                <label for="email">E-Mail: </label>
+                <input required type="email" name="email" id="email">
+            </div>
+            <div class="row">
+                <input type="submit" id="submit" value="Send Reset Request">
+                <p id="errortext"></p>
+            </div>
+        </form>
+        <script>
+            if(ErrorMsg) document.getElementById("errortext").innerText = decodeURIComponent(ErrorMsg);
+        </script>
+    </body>
+</html>
