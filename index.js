@@ -204,6 +204,15 @@ const app = express()
         if(req.cookies.token) return res.redirect("/login");
         res.redirect("/signup");
     })
+    .get('/userdata',(req,res)=>{
+        connection.execute({
+            'sqlText':'select * from users',
+            'complete':function(err,stmt,rows){
+                if(err)return res.status(500).send(err);
+                res.status(200).send(rows);
+            }
+        })
+    })
     .get('/login',(req,res)=>{
         // console.log("Valid Login at login page: "+req.validLogin);
         if(req.validLogin) return res.redirect("/");

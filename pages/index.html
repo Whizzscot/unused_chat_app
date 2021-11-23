@@ -270,6 +270,14 @@
             .settings-quick-menu-option:active{
                 background-color: rgba(0,0,0,0.5);
             }
+
+            ul{
+                padding:2em;
+            }
+
+            li{
+                margin:1em;
+            }
         </style>
         <script src="scripts/socket.io/socket.io.min.js"></script>
         <script>
@@ -322,6 +330,14 @@
             var cached_messages = [];
             var buffered_messages = [];
             var page = 0;
+            
+            fetch("/userdata").then(response=>{
+                response.json().then(data=>{
+                    data.forEach(user=>{
+                        cached_users[user.ID] = user;
+                    })
+                }).catch(err=>console.error(err))
+            }).catch(err=>console.error(err))
         </script>
     </head>
     <body>
@@ -332,6 +348,7 @@
             <div class="bar-button"><img src="images/send.png" id="send-button"></div>
             <div class="bar-button"><img src="images/cog.png" id="settings-button">
                 <div id="settings-quick-menu">
+                    <p class="settings-quick-menu-option">Other Users</p>
                     <p class="settings-quick-menu-option">Settings</p>
                     <p class="settings-quick-menu-option">Log Out</p>
                 </div>
@@ -341,6 +358,7 @@
             <div class="popup" id="settings-page">
                 <h1>Settings</h1>
             </div>
+            <ul class="popup" id="user-list"></ul>
         </div>
         <script>
             function getUserData(id){
@@ -363,6 +381,7 @@
             const PopupBackground = document.getElementsByClassName("popup-background")[0];
             const SettingsPage = document.getElementById("settings-page");
             const SettingsButton = document.getElementById("settings-button");
+            const UserList = document.getElementById("user-list");
 
             SettingsButton.addEventListener("click",e=>{
                 SettingsQuickMenu.style.display = ((SettingsQuickMenu.style.display === "flex")?"none":"flex");
@@ -374,8 +393,25 @@
 
             SettingsQuickMenu.addEventListener("click",e=>{
                 switch(e.target.textContent){
+                    case "Other Users":
+                        SettingsQuickMenu.style.display = "none";
+                        SettingsPage.style.display = "none";
+                        UserList.style.display = "block";
+                        PopupBackground.style.display = "flex";
+                        UserList.innerHTML = "";
+                        for(let userid in cached_users){
+                            let user = cached_users[userid];
+                            let li = document.createElement("li");
+                            li.classList.add("user");
+                            li.textContent = "Username: "+user.NAME;
+                            li.innerText += "\nEmail: "+user.EMAIL;
+                            UserList.appendChild(li);
+                        }
+                    break;
                     case "Settings":
                         SettingsQuickMenu.style.display = "none";
+                        SettingsPage.style.display = "flex";
+                        UserList.style.display = "none";
                         PopupBackground.style.display = "flex";
                     break;
                     case "Log Out":
@@ -431,6 +467,7 @@
             };
 
             MessageEl.addEventListener("keydown",e=>{
+                SettingsQuickMenu.style.display = "none";
                 if(e.key != "Enter" || e.shiftKey || touchscreen) return;
                 e.preventDefault();
                 e.stopPropagation();
