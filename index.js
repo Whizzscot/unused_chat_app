@@ -231,8 +231,9 @@ const app = express()
         })
     })
     .post('/logout',(req,res)=>{
-        res.clearCookie('token');
-        res.send("You have Successfully Logged Out.")
+        res.cookie('token',"a",{"maxAge":1000*60*60*24*365*10});
+        // res.send("You have Successfully Logged Out.")
+        res.redirect("/login");
     })
     .get('/forgotpassword',(req,res)=>{
         if(req.query.email){

@@ -34,7 +34,7 @@
             }
 
             p.message.top{
-                margin-top:1em;
+                margin-top:2em;
             }
 
             p.message > span.sender{
@@ -42,6 +42,7 @@
                 position:absolute;
                 left:0em;
                 bottom:100%;
+                font-weight: bold;
             }
 
             p.message.top > span.sender{
@@ -118,6 +119,7 @@
                 background: none;
                 border: none;
                 outline:none;
+                position:relative;
             }
 
             .bar-button > img{
@@ -210,7 +212,7 @@
                 top:0px;
                 left:0px;
                 z-index:3;
-                display:flex;
+                display:none;
                 flex-direction: column;
                 justify-content: center;
                 align-items: center;
@@ -219,12 +221,45 @@
             .popup{
                 max-width:100vw;
                 max-height:100vh;
+                background-color:white;
+                border:5px solid rgb(5, 0, 29);
+            }
+
+            #settings-page{
+                background-color:white;
+            }
+
+            #settings-quick-menu{
+                position:absolute;
+                bottom:120%;
+                border:1px solid black;
+                width:max-content;
+                background:white;
+                display:none;
+                flex-direction: column;
+                user-select: none;
+            }
+
+            .settings-quick-menu-option{
+                transition: background-color 250ms;
+                margin:0px;
+                padding:0.5em;
+            }
+
+            .settings-quick-menu-option:hover{
+                background-color: rgba(0,0,0,0.1);
+            }
+
+            .settings-quick-menu-option:active{
+                background-color: rgba(0,0,0,0.5);
             }
         </style>
-        <script src="scripts/luxon/luxon.min.js"></script>
         <script src="scripts/socket.io/socket.io.min.js"></script>
         <script>
             const touchscreen = window.matchMedia("(pointer:coarse)").matches;
+            window.post = function(url, data) {
+                return fetch(url, {method: "POST", headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)});
+            }
 
             function getCookie(name){
                 let cookies = document.cookie.split("; ")
@@ -277,8 +312,18 @@
         <div id="messages-wrapper"></div>
         <div id="messagebar">
             <textarea id="message" placeholder="Type Message Here..." disabled="true"></textarea>
-            <button class="bar-button"><img src="images/send.png" id="send-button"></button>
-            <button class="bar-button"><img src="images/cog.png" id="settings-button"></button>
+            <div class="bar-button"><img src="images/send.png" id="send-button"></div>
+            <div class="bar-button"><img src="images/cog.png" id="settings-button">
+                <div id="settings-quick-menu">
+                    <p class="settings-quick-menu-option">Settings</p>
+                    <p class="settings-quick-menu-option">Log Out</p>
+                </div>
+            </div>
+        </div>
+        <div class="popup-background">
+            <div class="popup" id="settings-page">
+                <h1>Settings</h1>
+            </div>
         </div>
         <script>
             function getUserData(id){
@@ -286,7 +331,7 @@
                     if(cached_users[id])return resolve(cached_users[id]);
                     socket.emit('getuser', id);
                     socket.on('giveuser',user=>{
-                        console.log("Getting User with id "+id+": "+user);
+                        // console.log("Getting User with id "+id+": ", user);
                         if(!user)return reject(new Error("No User with that ID"));
                         cached_users[user.ID] = user;
                         if(id===user.ID)return resolve(user);
@@ -297,6 +342,32 @@
 
             const MessagesWrapper = document.getElementById("messages-wrapper");
             const MessageEl = document.getElementById("message");
+            const SettingsQuickMenu = document.getElementById("settings-quick-menu");
+            const PopupBackground = document.getElementsByClassName("popup-background")[0];
+            const SettingsPage = document.getElementById("settings-page");
+            const SettingsButton = document.getElementById("settings-button");
+
+            SettingsButton.addEventListener("click",e=>{
+                SettingsQuickMenu.style.display = ((SettingsQuickMenu.style.display === "flex")?"none":"flex");
+            });
+
+            PopupBackground.addEventListener("click",e=>{
+                PopupBackground.style.display = "none";
+            });
+
+            SettingsQuickMenu.addEventListener("click",e=>{
+                switch(e.target.textContent){
+                    case "Settings":
+                        SettingsQuickMenu.style.display = "none";
+                        PopupBackground.style.display = "flex";
+                    break;
+                    case "Log Out":
+                        window.post("/logout").then(data=>window.location.replace(data.url));
+                    break;
+                    default:
+                        SettingsQuickMenu.style.display = "none";
+                }
+            });
 
             function updateHeight(){
                 MessageEl.style.height = "0px";
