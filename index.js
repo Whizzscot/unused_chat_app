@@ -14,6 +14,7 @@ const hash = function(string){
 
 var Hostname = "";
 const PORT = process.env.PORT || 3000;
+const maxMessages = 50;
 
 const connection = snowflake.createConnection({
     account:"jf48431.europe-west4.gcp",
@@ -171,7 +172,7 @@ function generatePasswordReset(email){
 };
 
 const app = express()
-    .use((req,res,next)=>{Hostname=req.hostname;console.log(Hostname);next();})
+    .use((req,res,next)=>{Hostname=req.hostname;next();})
     .use(express.json())
     .use(cookieParser())
     .use((req,res,next)=>{
@@ -194,18 +195,19 @@ const app = express()
     })
     .use(favicon(path.join(__dirname, "favicon.ico")))
     .use('/images',express.static(path.join(__dirname,"images")))
+    .use('/scripts',express.static(path.join(__dirname,"scripts")))
     .get('/favicon.ico',(req,res)=>res.sendFile(path.join(__dirname, "favicon.ico")))
     .get('/form.css',(req,res)=>res.sendFile(path.join(__dirname,"form.css")))
     .get('/',(req,res)=>{
         // console.log("Valid Login to main: "+req.validLogin);
-        if(req.validLogin) return res.sendFile(path.join(__dirname, "index.html"));
+        if(req.validLogin) return res.sendFile(path.join(__dirname, "pages/index.html"));
         if(req.cookies.token) return res.redirect("/login");
         res.redirect("/signup");
     })
     .get('/login',(req,res)=>{
         // console.log("Valid Login at login page: "+req.validLogin);
         if(req.validLogin) return res.redirect("/");
-        res.sendFile(path.join(__dirname, "login.html"));
+        res.sendFile(path.join(__dirname, "pages/login.html"));
     })
     .post('/login',(req,res)=>{
         let body = '';
@@ -238,7 +240,7 @@ const app = express()
                 res.send("You have been sent an e-mail to reset your password. It may take a few minutes to arrive.")
             }).catch(err=>res.redirect('/forgotpassword?errmsg='+err.message));
         }
-        res.sendFile(path.join(__dirname,"get_email.html"));
+        res.sendFile(path.join(__dirname,"pages/get_email.html"));
     })
     .post('/forgotpassword',(req,res)=>{
         let body = '';
@@ -252,7 +254,7 @@ const app = express()
             res.redirect('/forgotpassword?email='+email);
         })
     })
-    .get('/passwordreset',(req,res)=>res.sendFile(path.join(__dirname,"passwordreset.html")))
+    .get('/passwordreset',(req,res)=>res.sendFile(path.join(__dirname,"pages/passwordreset.html")))
     .post('/resetpassword',(req,res)=>{
         let body = '';
         req.on('data',data=>{
@@ -291,7 +293,7 @@ const app = express()
         });
     })
     .get('/signup',(req,res)=>{
-        res.sendFile(path.join(__dirname, "signup.html"));
+        res.sendFile(path.join(__dirname, "pages/signup.html"));
     })
     .post('/signup',(req,res)=>{
         let body = '';
@@ -327,7 +329,7 @@ const app = express()
             },(err,info)=>{
                 if(err)return res.send(err.message);
                 // console.log(`Email sent!\n${info.response}`);
-                res.sendFile(path.join(__dirname,"signupsuccess.html"));
+                res.sendFile(path.join(__dirname,"pages/signupsuccess.html"));
             });
         });
     })
@@ -351,7 +353,7 @@ const app = express()
             res.send(`Sorry! Your token expired.<a href='/signupsuccess?email=${email}'>Re-Confirm Email</a>`);
         }
     })
-    .all("*",(req,res)=>res.sendFile(path.join(__dirname, "404.html")))
+    .all("*",(req,res)=>res.status(404).sendFile(path.join(__dirname, "pages/404.html")))
 ;
 
 const server = app.listen(PORT,()=>console.log(`Server listening on port ${PORT}...`));
@@ -372,6 +374,42 @@ io.on('connection',socket=>{
     socket.on("message", message=>{
         message.sent = message.sent || Date.now();
         console.log(`Message Sent by ${socket.userData.NAME} at ${message.sent}.\nContent: "${message.content}"`);
+        connection.execute({
+            'sqlText':'insert into messages(sentby, content, sent) values(?,?,?)',
+            'binds':[socket.userData.ID,message.content,message.sent],
+            'complete':function(err,stmt,rows){
+                if(err){
+                    console.error("Error saving message:\n"+err.message);
+                    socket.emit('error', err);
+                }
+                message.sentby = socket.userData.ID;
+                socket.emit("message-sent", message.content);
+                socket.broadcast.emit('newmessage',message);
+            }
+        })
     });
+
+    socket.on('getmessages',offset=>{
+        connection.execute({
+            'sqlText':'select * from messages where deleted=false order by sent desc limit ? offset ?',
+            'binds':[maxMessages, offset],
+            'complete':function(err,stmt,rows){
+                if(err)return socket.emit('error',err);
+                socket.emit('givemessages', rows);
+            }
+        })
+    });
+
+    socket.on('getuser',id=>{
+        connection.execute({
+            'sqlText':'select id, name, email, created from users where id=?',
+            'binds':[id],
+            'complete':function(err,stmt,rows){
+                if(err)return socket.emit('error',err);
+                socket.emit('giveuser', rows[0]);
+            }
+        })
+    });
+
     socket.emit("userdata",socket.userData);
 })
