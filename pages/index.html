@@ -254,9 +254,9 @@
             socket.on('data',data=>console.log(data));
             socket.on('err',data=>console.error(err.message));
             socket.on('connect',()=>{
-                socket.emit('getmessages',0)
+                
             });
-
+            socket.emit('getmessages',0)
             document.addEventListener("contextmenu",e=>{
                 e.preventDefault();
                 return false;
